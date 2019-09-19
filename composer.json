@@ -13,16 +13,23 @@
     "require": {
         "php": ">=5.3",
         "ext-pdo": "*",
-        "twig/twig": "1.*",
+        "mikecao/flight": "1.3.*",
+        "lespoilus/spyc": "dev-master",
+        "twig/twig": "2.*",
         "swiftmailer/swiftmailer": "5.*",
-        "mikecao/flight": "dev-master",
         "jdorn/sql-formatter": "dev-master",
         "jdorn/file-system-cache": "dev-master",
-        "phpoffice/phpexcel": "dev-develop",
-        "adodb/adodb-php": "dev-master",
-        "lespoilus/spyc": "dev-master",
-        "google/apiclient": "1.0.*@beta",
-        "alcaeus/mongo-php-adapter": "^1.1@dev"
+        "phpoffice/phpexcel": "1.*",
+        "yajra/laravel-pdo-via-oci8": "dev-master"
+    },
+    "conflict": {
+        "google/apiclient": ">=2",
+        "adodb/adodb-php": ">=6"
+    },
+    "suggests": {
+        "adodb/adodb-php": "when using adodb",
+        "google/apiclient": "when using google charts",
+        "alcaeus/mongo-php-adapter": "when using mongodb, version ^1.1@dev"
     },
     "autoload": {
         "files": [

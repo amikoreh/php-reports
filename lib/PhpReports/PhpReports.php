@@ -46,10 +46,18 @@ class PhpReports {
 		if(file_exists('templates/local')) array_unshift($template_dirs, 'templates/local');
 
 		$loader = new Twig_Loader_Chain(array(
-			new Twig_Loader_Filesystem($template_dirs),
-			new Twig_Loader_String()
+			new Twig_Loader_Filesystem($template_dirs)
 		));
 		self::$twig = new Twig_Environment($loader);
+
+		// configure date format displayed to user; php-to-js format from https://stackoverflow.com/a/16702565/1155121 
+		$twigDateFormat = preg_replace('/[^YyMmd\-\/\.]/', '', self::$config['twig_setDateFormat_format']); // pass only date part, ignore time
+		self::$twig->getExtension('Twig_Extension_Core')->setDateFormat($twigDateFormat);
+		$phpFormatOptions = array('y', 'Y', 'm', 'd');
+		$jsFormatOptions = array('yy', 'yyyy', 'mm', 'dd');
+		$jsFormat = str_replace($phpFormatOptions, $jsFormatOptions, $twigDateFormat);
+		self::$twig->addGlobal('js_dateformat', $jsFormat);
+		
 		self::$twig->addFunction(new Twig_SimpleFunction('dbdate', 'PhpReports::dbdate'));
 		self::$twig->addFunction(new Twig_SimpleFunction('sqlin', 'PhpReports::generateSqlIN'));
 
@@ -62,9 +70,9 @@ class PhpReports {
 		self::$twig->addGlobal('theme', $theme);
 		self::$twig->addGlobal('path', $path);
 
-		self::$twig->addFilter('var_dump', new Twig_Filter_Function('var_dump'));
+		self::$twig->addFilter(new Twig_SimpleFilter('var_dump', function ($mixed) { var_dump($mixed); }));
 
-		self::$twig_string = new Twig_Environment(new Twig_Loader_String(), array('autoescape'=>false));
+		self::$twig_string = new Twig_Environment($loader, array('autoescape'=>false));
 		self::$twig_string->addFunction(new Twig_SimpleFunction('sqlin', 'PhpReports::generateSqlIN'));
 
 		FileSystemCache::$cacheDir = self::$config['cacheDir'];
@@ -166,12 +174,20 @@ class PhpReports {
 		$macros = array_merge($default,$macros);
 
 		//if a template path like 'html/report' is given, add the twig file extension
-		if(preg_match('/^[a-zA-Z_\-0-9\/]+$/',$template)) $template .= '.twig';
-		return self::$twig->render($template,$macros);
+		if (preg_match('/^[a-zA-Z_\-0-9\/]+$/',$template)) {
+			$template .= '.twig';
+			return self::$twig->render($template,$macros);
+		} else {
+			// string template for twig2 compatibility, src: https://stackoverflow.com/a/31082808/1155121
+			$template = self::$twig->createTemplate($template);
+			return $template->render($macros);
+		}
+		
 	}
 
 	public static function renderString($template, $macros) {
-			return self::$twig_string->render($template,$macros);
+			$template = self::$twig_string->createTemplate($template);
+			return $template->render($macros);
 	}
 
 	public static function displayReport($report,$type) {
@@ -382,6 +398,10 @@ class PhpReports {
 		}
 		if(!isset($_REQUEST['nocache'])) {
 			$data = FileSystemCache::retrieve($cacheKey, filemtime($loc));
+		}
+
+		if (version_compare(phpversion(), '7.1', '>=')) {
+			$data = false; // TODO - PHP 7.1 cache is not working!
 		}
 
 		//report data not cached, need to parse it

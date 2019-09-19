@@ -117,7 +117,10 @@ return array(
 	),
 	// This is called twice, once for each Twig_Environment that is used
 	'twig_init_function' => function (Twig_Environment $twig) {
+	},
 
+	// Twig config
+	'twig_setDateFormat_format' => 'Y-m-d H:i:s', // set date format for HTML report
 	}
 );
 ?>

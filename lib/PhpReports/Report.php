@@ -348,6 +348,9 @@ class Report {
 						}
 					}
 				}
+				elseif ($params['type'] === 'textarea') {
+					$params['is_textarea'] = true;
+				}
 				else {
 					if($params['multiple']) {
 						$params['is_textarea'] = true;
